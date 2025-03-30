@@ -1,0 +1,418 @@
+/* --- Base Styles & Theme from Project B --- */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Roboto+Mono&display=swap");
+
+:root {
+  /* Light Mode Base Colors */
+  --bgColor: #f8f9fa; /* Lighter background */
+  --panelBgColor: #ffffff;
+  --borderColor: #e0e0e0;
+  --textPrimary: #212529;
+  --textSecondary: #6c757d; /* Adjusted secondary text */
+  --primaryColor: #007bff; /* Standard blue for primary */
+  --buttonBg: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8),
+    rgba(240, 240, 240, 0.8)
+  );
+  --buttonHoverBg: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(240, 240, 240, 0.9)
+  );
+  --buttonBorder: rgba(0, 0, 0, 0.1);
+  --buttonShadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --buttonHoverShadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --iconBtnHoverBg: #f0f0f0;
+  --formatIndicatorBg: #f5f5f5;
+  --formatIndicatorColor: #666;
+
+  /* Dark Mode Overrides (applied via body.dark-mode) */
+  --darkBgColor: #121212;
+  --darkPanelBgColor: #1e1e1e; /* Darker panel */
+  --darkBorderColor: #333;
+  --darkTextPrimary: #e0e0e0;
+  --darkTextSecondary: #a0a0a0; /* Lighter secondary */
+  --darkPrimaryColor: #4dabf7; /* Lighter blue for dark mode */
+  --darkButtonBg: linear-gradient(
+    135deg,
+    rgba(50, 50, 50, 0.8),
+    rgba(40, 40, 40, 0.8)
+  );
+  --darkButtonHoverBg: linear-gradient(
+    135deg,
+    rgba(55, 55, 55, 0.9),
+    rgba(45, 45, 45, 0.9)
+  );
+  --darkButtonBorder: rgba(255, 255, 255, 0.1);
+  --darkButtonShadow: 0 2px 4px rgba(255, 255, 255, 0.05);
+  --darkButtonHoverShadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+  --darkIconBtnHoverBg: #333;
+  --darkFormatIndicatorBg: #333;
+  --darkFormatIndicatorColor: #ccc;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  width: 700px; /* Adjusted width */
+  height: 450px; /* Adjusted height */
+  overflow: hidden;
+  background-color: var(--bgColor);
+  color: var(--textPrimary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 14px; /* Base font size */
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  background-color: var(--panelBgColor); /* Container has panel bg */
+  transition: background-color 0.3s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 10px 6px 10px;
+  border-bottom: 1px solid var(--borderColor);
+  transition: border-color 0.3s ease;
+}
+
+h1.header-title {
+  font-size: 18px; /* Slightly smaller header */
+  font-weight: 600; /* Medium weight */
+  color: var(--textPrimary);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--textSecondary);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.icon-btn svg {
+  stroke: currentColor; /* Make SVG color inherit */
+}
+
+.icon-btn:hover {
+  background-color: var(--iconBtnHoverBg);
+  color: var(--textPrimary); /* Darken icon on hover */
+}
+
+#sunIcon,
+#moonIcon {
+  position: absolute;
+  transition: opacity 0.4s ease;
+}
+
+#moonIcon {
+  opacity: 0;
+}
+body.dark-mode #sunIcon {
+  opacity: 0;
+}
+body.dark-mode #moonIcon {
+  opacity: 1;
+}
+
+.panels {
+  flex: 1;
+  padding: 15px 10px; /* More padding around main content */
+  overflow: hidden; /* Prevent panels div itself from scrolling */
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px 10px 10px;
+  border-top: 1px solid var(--borderColor);
+  transition: border-color 0.3s ease;
+}
+
+.btn {
+  padding: 6px 14px; /* Slightly smaller buttons */
+  background: var(--buttonBg);
+  border: 1px solid var(--buttonBorder);
+  border-radius: 6px; /* Less rounded buttons */
+  cursor: pointer;
+  display: inline-flex; /* Use inline-flex */
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  font-size: 13px; /* Smaller button text */
+  color: var(--textPrimary);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.btn:hover {
+  background: var(--buttonHoverBg);
+  box-shadow: var(--buttonHoverShadow);
+}
+
+.format-indicator {
+  font-size: 12px;
+  color: var(--formatIndicatorColor);
+  font-family: "Montserrat", sans-serif;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: var(--formatIndicatorBg);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- Dark Mode Specific Styles --- */
+body.dark-mode {
+  background-color: var(--darkBgColor);
+  color: var(--darkTextPrimary);
+}
+
+body.dark-mode .container {
+  background-color: var(--darkPanelBgColor);
+}
+
+body.dark-mode .header,
+body.dark-mode .footer {
+  border-color: var(--darkBorderColor);
+}
+
+body.dark-mode h1.header-title {
+  color: var(--darkTextPrimary);
+}
+
+body.dark-mode .icon-btn {
+  color: var(--darkTextSecondary);
+}
+
+body.dark-mode .icon-btn:hover {
+  background-color: var(--darkIconBtnHoverBg);
+  color: var(--darkTextPrimary);
+}
+
+body.dark-mode .btn {
+  background: var(--darkButtonBg);
+  border-color: var(--darkButtonBorder);
+  color: var(--darkTextPrimary);
+}
+
+body.dark-mode .btn:hover {
+  background: var(--darkButtonHoverBg);
+  box-shadow: var(--darkButtonHoverShadow);
+}
+
+body.dark-mode .format-indicator {
+  background-color: var(--darkFormatIndicatorBg);
+  color: var(--darkFormatIndicatorColor);
+}
+
+/* --- Styles Integrated from Project A (HippoType) --- */
+
+/* Override Project A's main to fit container */
+main.typing-main {
+  width: 100%;
+  margin: 0; /* Remove auto margin */
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Make main fill the panel space */
+}
+
+/* Project A's header adapted */
+#typing-header {
+  display: flex; /* Use flexbox */
+  justify-content: space-between; /* Space out items */
+  align-items: center; /* Align vertically */
+  margin-bottom: 15px; /* Space below header */
+  padding: 0 5px; /* Add slight horizontal padding */
+}
+
+#info {
+  /* Styles inherited from .format-indicator */
+  font-weight: 500;
+  min-width: 60px; /* Ensure space for WPM */
+  text-align: center;
+  color: var(--primaryColor); /* Use theme primary color */
+}
+
+body.dark-mode #info {
+  color: var(--darkPrimaryColor);
+}
+
+#buttons {
+  text-align: right; /* Keep button to the right */
+}
+
+/* Typing Game Area */
+div#game {
+  line-height: 30px; /* Adjust line height slightly */
+  height: calc(3 * 30px); /* Show 3 lines */
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--borderColor); /* Add border like panels */
+  border-radius: 4px;
+  padding: 5px;
+  flex-grow: 1; /* Allow game area to take remaining space */
+  background-color: var(--bgColor); /* Match body background */
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+body.dark-mode div#game {
+  border-color: var(--darkBorderColor);
+  background-color: var(--darkBgColor);
+}
+
+div#game:focus {
+  outline: 1px solid var(--primaryColor); /* Focus outline with theme color */
+  border-color: var(--primaryColor); /* Highlight border on focus */
+}
+body.dark-mode div#game:focus {
+  outline-color: var(--darkPrimaryColor);
+  border-color: var(--darkPrimaryColor);
+}
+
+#words {
+  filter: blur(3px); /* Slightly less blur */
+  color: var(--textSecondary);
+  transition: filter 0.2s ease, opacity 0.3s ease;
+}
+
+#game:focus #words {
+  filter: blur(0);
+}
+
+body.dark-mode #words {
+  color: var(--darkTextSecondary);
+}
+
+#focus-error {
+  position: absolute;
+  inset: 0;
+  display: flex; /* Use flex to center */
+  align-items: center;
+  justify-content: center;
+  color: var(--textSecondary);
+  background-color: rgba(0, 0, 0, 0.1); /* Slight overlay */
+  border-radius: 4px; /* Match parent */
+}
+body.dark-mode #focus-error {
+  color: var(--darkTextSecondary);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+#game:focus #focus-error {
+  display: none;
+}
+
+/* Words and Letters */
+div.word {
+  display: inline-block;
+  font-family: "Roboto Mono", monospace; /* Specific font for typing */
+  margin: 0 4px; /* Slightly less margin */
+  font-size: 1.1rem; /* Adjust font size */
+}
+
+.letter {
+  /* Default state */
+  color: var(--textSecondary); /* Use secondary text color */
+  transition: color 0.1s ease;
+}
+body.dark-mode .letter {
+  color: var(--darkTextSecondary);
+}
+
+.letter.correct {
+  color: var(--textPrimary); /* Use primary text color for correct */
+}
+body.dark-mode .letter.correct {
+  color: var(--darkTextPrimary);
+}
+
+.letter.incorrect {
+  color: #dc3545; /* Red for incorrect */
+  /* Add subtle background or underline for incorrect */
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 2px;
+}
+body.dark-mode .letter.incorrect {
+  color: #f8d7da; /* Lighter red for dark mode text */
+  background-color: rgba(248, 215, 218, 0.1);
+}
+
+.letter.incorrect.extra {
+  text-decoration: underline wavy #dc3545; /* Indicate extra letters */
+  background-color: transparent;
+}
+body.dark-mode .letter.incorrect.extra {
+  text-decoration-color: #f8d7da;
+}
+
+/* Cursor Styling */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+#cursor {
+  display: none; /* Hidden by default */
+  width: 2px;
+  height: 1.3rem; /* Match letter size */
+  background: var(--primaryColor);
+  position: absolute; /* Position relative to #game */
+  /* top/left set by JS */
+  animation: blink 0.5s infinite;
+  border-radius: 1px;
+  transition: background-color 0.3s ease;
+}
+body.dark-mode #cursor {
+  background: var(--darkPrimaryColor);
+}
+
+#game:focus #cursor {
+  display: block;
+}
+
+/* Game Over State */
+#game.over #words {
+  opacity: 0.6; /* Slightly more visible */
+  filter: blur(0px);
+}
+
+#game.over:focus #cursor {
+  display: none;
+}
+
+#game.over #focus-error {
+  display: none;
+}
+
+/* Adjust footer WPM placeholder */
+.footer .format-indicator:first-child {
+  min-width: 80px; /* Give space for "WPM: XXX" */
+  text-align: center;
+}

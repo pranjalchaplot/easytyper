@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "EasyTyper",
+  "version": "1.0",
+  "description": "A simple typing practice extension.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage"]
+}
