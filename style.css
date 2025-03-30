@@ -432,12 +432,12 @@ body.dark-mode #cursor {
 
 /* Time Slider Styling */
 #timeSliderContainer {
-  margin-top: 10px;
   display: none; /* Hide time slider by default */
   justify-content: center; /* Center the slider horizontally */
   width: 50%; /* Decrease the width */
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 10px;
 }
 
 #timeSliderContainer.show {
