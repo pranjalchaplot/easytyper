@@ -53,4 +53,26 @@ document.addEventListener("DOMContentLoaded", () => {
       gameArea.focus();
     }
   });
+
+  // Listen for messages from typing.js
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.message === "updateWPM") {
+      const lastWPM = request.lastWPM;
+      const highScore = request.highScore;
+
+      // Update the popup with the WPM values
+      document.getElementById("lastWPM").textContent = `Last WPM: ${lastWPM}`;
+      document.getElementById(
+        "highScore"
+      ).textContent = `High Score: ${highScore}`;
+    }
+  });
+
+  // Load last WPM and high score from local storage on popup load
+  const lastWPM = localStorage.getItem("lastWPM") || "--";
+  const highScore = localStorage.getItem("highScore") || "--";
+
+  // Update the popup with the WPM values
+  document.getElementById("lastWPM").textContent = `Last WPM: ${lastWPM}`;
+  document.getElementById("highScore").textContent = `High Score: ${highScore}`;
 });

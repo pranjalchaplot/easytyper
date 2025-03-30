@@ -46,7 +46,7 @@
               width="20"
               height="20"
               viewBox="0 0 24 24"
-              fill="none"
+              fill="currentColor"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
@@ -61,7 +61,7 @@
       <div class="panels">
         <main class="typing-main">
           <div id="typing-header">
-            <div id="info" class="format-indicator">30</div>
+            <div id="info" class="format-indicator">10</div>
             <div id="buttons">
               <button id="newGameBtn" class="btn">New game</button>
             </div>
@@ -75,8 +75,8 @@
       </div>
 
       <div class="footer">
-        <span class="format-indicator">WPM: --</span>
-        <span class="format-indicator">© EasyTyper</span>
+        <span class="format-indicator" id="lastWPM">Last WPM: --</span>
+        <span class="format-indicator" id="highScore">High Score: --</span>
       </div>
     </div>
 

@@ -3,7 +3,7 @@ const words =
     " "
   );
 const wordsCount = words.length;
-const gameTime = 30 * 1000; // 30 seconds
+const gameTime = 10 * 1000; // 30 seconds
 window.timer = null;
 window.gameStart = null;
 // window.pauseTime = 0; // Not used in this version
@@ -78,7 +78,7 @@ function newGame() {
   if (firstLetter) addClass(firstLetter, "current");
 
   infoEl.innerHTML = gameTime / 1000 + "s"; // Show units
-  wpmFooterEl.innerHTML = "WPM: --"; // Reset footer WPM
+  // wpmFooterEl.innerHTML = "WPM: --"; // Reset footer WPM
   window.timer = null;
   window.gameStart = null;
 
@@ -135,7 +135,26 @@ function gameOver() {
   addClass(gameEl, "over");
   const result = getWpm();
   infoEl.innerHTML = `Done!`; // Update top info
-  wpmFooterEl.innerHTML = `WPM: ${result}`; // Update footer WPM
+  wpmFooterEl.innerHTML = `Last WPM: ${result}`; // Update footer WPM
+
+  // Store last WPM in local storage
+  localStorage.setItem("lastWPM", result);
+
+  // Get all-time high WPM from local storage
+  let highScore = localStorage.getItem("highScore") || 0;
+
+  // Update all-time high WPM if current WPM is higher
+  if (result > highScore) {
+    localStorage.setItem("highScore", result);
+    highScore = result;
+  }
+
+  // Send WPM to popup.js
+  chrome.runtime.sendMessage({
+    message: "updateWPM",
+    lastWPM: result,
+    highScore: highScore,
+  });
 }
 
 gameEl.addEventListener("keydown", (ev) => {
