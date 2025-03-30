@@ -3,7 +3,7 @@ const words =
     " "
   );
 const wordsCount = words.length;
-const gameTime = 10 * 1000; // 30 seconds
+let gameTime = 10 * 1000; // 30 seconds
 window.timer = null;
 window.gameStart = null;
 // window.pauseTime = 0; // Not used in this version
@@ -23,6 +23,19 @@ function addClass(el, name) {
 }
 function removeClass(el, name) {
   if (el) el.classList.remove(name);
+}
+
+function loadGameTime() {
+  const savedTime = localStorage.getItem("gameTime");
+  if (savedTime) {
+    // Update your game's time variable
+    gameTime = parseInt(savedTime) * 1000; // Convert seconds to milliseconds
+
+    // If you have a countdown or timer display, update it
+    if (document.getElementById("info")) {
+      document.getElementById("info").textContent = savedTime + "s";
+    }
+  }
 }
 
 function randomWord() {
@@ -76,6 +89,12 @@ function newGame() {
   const firstLetter = document.querySelector(".letter");
   if (firstWord) addClass(firstWord, "current");
   if (firstLetter) addClass(firstLetter, "current");
+
+  // Load game time from local storage
+  const savedTime = localStorage.getItem("gameTime");
+  if (savedTime) {
+    gameTime = parseInt(savedTime) * 1000; // Convert seconds to milliseconds
+  }
 
   infoEl.innerHTML = gameTime / 1000 + "s"; // Show units
   // wpmFooterEl.innerHTML = "WPM: --"; // Reset footer WPM

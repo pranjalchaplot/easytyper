@@ -428,5 +428,131 @@ body.dark-mode #cursor {
 /* Adjust footer WPM placeholder */
 .footer .format-indicator:first-child {
   min-width: 80px; /* Give space for "WPM: XXX" */
+}
+
+/* Time Slider Styling */
+#timeSliderContainer {
+  margin-top: 10px;
+  display: none; /* Hide time slider by default */
+}
+
+#timeSlider {
+  width: 100%;
+}
+
+#timeSliderValue {
+  display: block;
   text-align: center;
+  margin-top: 5px;
+  text-align: center;
+}
+
+/* --- Add these to your style.css file --- */
+
+/* Styling for time slider container */
+#timeSliderContainer {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  margin: 0 15px;
+  position: relative;
+}
+
+/* Base slider styling */
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--borderColor);
+  outline: none;
+  transition: background 0.3s;
+}
+
+body.dark-mode .slider {
+  background: var(--darkBorderColor);
+}
+
+/* Slider thumb styling */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primaryColor);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primaryColor);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  border: none;
+}
+
+/* Slider hover effects */
+.slider:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.slider:hover::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+body.dark-mode .slider::-webkit-slider-thumb {
+  background: var(--darkPrimaryColor);
+}
+
+body.dark-mode .slider::-moz-range-thumb {
+  background: var(--darkPrimaryColor);
+}
+
+/* Slider value display */
+.slider-value {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panelBgColor);
+  color: var(--textSecondary);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+body.dark-mode .slider-value {
+  background: var(--darkPanelBgColor);
+  color: var(--darkTextSecondary);
+}
+
+#timeSliderContainer:hover .slider-value {
+  opacity: 1;
+}
+
+/* Adjust typing header to use flexbox properly */
+#typing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 0 5px;
+}
+
+/* Make info a fixed size */
+#info {
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Ensure buttons div is properly aligned */
+#buttons {
+  text-align: right;
 }
