@@ -434,28 +434,94 @@ body.dark-mode #cursor {
 #timeSliderContainer {
   margin-top: 10px;
   display: none; /* Hide time slider by default */
+  justify-content: center; /* Center the slider horizontally */
+  width: 50%; /* Decrease the width */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#timeSliderContainer.show {
+  display: flex; /* Show the slider when the 'show' class is added */
 }
 
 #timeSlider {
-  width: 100%;
+  width: 100%; /* Make the slider fill the container */
+  -webkit-appearance: none; /* Remove default styling */
+  height: 4px;
+  border-radius: 2px;
+  background: var(--borderColor);
+  outline: none;
+  transition: background 0.3s;
 }
 
+body.dark-mode #timeSlider {
+  background: var(--darkBorderColor);
+}
+
+/* Slider thumb styling */
+#timeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primaryColor);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+#timeSlider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primaryColor);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  border: none;
+}
+
+/* Slider hover effects */
+#timeSlider:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+#timeSlider:hover::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+body.dark-mode #timeSlider::-webkit-slider-thumb {
+  background: var(--darkPrimaryColor);
+}
+
+body.dark-mode #timeSlider::-moz-range-thumb {
+  background: var(--darkPrimaryColor);
+}
+
+/* Slider value display */
 #timeSliderValue {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panelBgColor);
+  color: var(--textSecondary);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 3px;
   display: block;
   text-align: center;
   margin-top: 5px;
-  text-align: center;
+  transition: opacity 0.3s;
+  pointer-events: none;
 }
 
-/* --- Add these to your style.css file --- */
+body.dark-mode #timeSliderValue {
+  background: var(--darkPanelBgColor);
+  color: var(--darkTextSecondary);
+}
 
-/* Styling for time slider container */
-#timeSliderContainer {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  margin: 0 15px;
-  position: relative;
+#timeSliderContainer:hover #timeSliderValue {
+  opacity: 1;
 }
 
 /* Base slider styling */
@@ -531,10 +597,6 @@ body.dark-mode .slider::-moz-range-thumb {
 body.dark-mode .slider-value {
   background: var(--darkPanelBgColor);
   color: var(--darkTextSecondary);
-}
-
-#timeSliderContainer:hover .slider-value {
-  opacity: 1;
 }
 
 /* Adjust typing header to use flexbox properly */
