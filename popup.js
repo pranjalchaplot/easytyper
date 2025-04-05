@@ -136,15 +136,4 @@ document.addEventListener("DOMContentLoaded", () => {
     (value) => `${value} line${value > 1 ? "s" : ""}`, // Formatter for lines
     4 // Default value
   );
-
-  setupSlider(
-    // *** NEW WPL Slider ***
-    "wplInfo",
-    "wplSliderContainer",
-    "wplSlider",
-    "gameWPL",
-    "updateWPL",
-    (value) => `${value} wpl`, // Formatter for WPL
-    10 // Default value
-  );
 });

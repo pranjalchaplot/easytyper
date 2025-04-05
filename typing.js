@@ -9,7 +9,6 @@ const AVERAGE_WORD_LENGTH = 5; // Estimate for font calculation (chars + space)
 // --- Global State ---
 let gameTime = (localStorage.getItem("gameTime") || 10) * 1000; // Default 10s
 let gameLines = parseInt(localStorage.getItem("gameLines") || 4); // Default 4 lines
-let gameWPL = parseInt(localStorage.getItem("gameWPL") || 10); // Default 10 WPL
 window.timer = null;
 window.gameStart = null;
 let gameActive = false; // Track if the timer is running
@@ -45,69 +44,6 @@ function debounce(func, wait) {
     timeout = setTimeout(later, wait);
   };
 }
-
-// Recalculate font size based on desired Words Per Line (WPL)
-function calculateAndApplyFontSize(targetWPL) {
-  if (!wordsEl || !gameEl || targetWPL <= 0 || gameLines <= 0) return;
-
-  // --- Calculate Font Size based on Width (WPL) ---
-  const gameAreaPaddingHorizontal = 10; // Sum of left/right padding in #game (5px + 5px)
-  const containerWidth = gameEl.offsetWidth - gameAreaPaddingHorizontal;
-  let fontSizeRemFromWPL = 2.5; // Default max
-
-  if (containerWidth > 0) {
-    const targetWidthPerWord = containerWidth / targetWPL;
-    const estimatedCharWidthAt1Rem = 0.6; // Heuristic
-    const estimatedFontSizeWPL =
-      targetWidthPerWord / (AVERAGE_WORD_LENGTH + 1) / estimatedCharWidthAt1Rem;
-    fontSizeRemFromWPL = Math.max(0.8, Math.min(estimatedFontSizeWPL, 2.5)); // Clamp WPL calculation
-  }
-
-  // --- Calculate Font Size based on Height (Lines) ---
-  const gameAreaPaddingVertical = 10; // Sum of top/bottom padding (5px + 5px)
-  const containerHeight = gameEl.offsetHeight - gameAreaPaddingVertical;
-  const lineHeightRelative = 1.8; // Must match CSS variable --line-height-relative
-  let fontSizeRemFromHeight = 2.5; // Default max
-
-  if (containerHeight > 0) {
-    const rootFontSizePx = parseFloat(
-      getComputedStyle(document.documentElement).fontSize
-    );
-    const maxFontSizePx = containerHeight / (gameLines * lineHeightRelative);
-    const estimatedFontSizeHeight = maxFontSizePx / rootFontSizePx; // Convert to rem
-    fontSizeRemFromHeight = Math.max(
-      0.8,
-      Math.min(estimatedFontSizeHeight, 2.5)
-    ); // Clamp Height calculation
-  }
-
-  // --- Determine Final Font Size ---
-  // Use the smaller of the two calculated sizes to fit both width and height constraints
-  const finalFontSizeRem = Math.min(
-    fontSizeRemFromWPL,
-    fontSizeRemFromHeight
-  ).toFixed(2);
-
-  // console.log(`WPL: ${targetWPL}, Lines: ${gameLines}, Width: ${containerWidth}, Height: ${containerHeight}, FS_WPL: ${fontSizeRemFromWPL.toFixed(2)}, FS_H: ${fontSizeRemFromHeight.toFixed(2)}, Final: ${finalFontSizeRem}rem`);
-
-  // Apply the calculated font size using CSS variable
-  document.documentElement.style.setProperty(
-    "--word-font-size",
-    `${finalFontSizeRem}rem`
-  );
-
-  // Apply directly to wordsEl as well to ensure transition works
-  wordsEl.style.fontSize = `var(--word-font-size)`;
-
-  // Re-calculate cursor position *after* font size is applied and potentially rendered
-  requestAnimationFrame(updateCursorPosition);
-}
-
-// Debounced version for use with sliders/resizes
-const debouncedCalculateAndApplyFontSize = debounce(
-  calculateAndApplyFontSize,
-  150
-);
 
 function applySettings() {
   // Apply Line Count Setting
@@ -211,8 +147,8 @@ function newGame() {
   applySettings();
 
   // Generate initial words
-  // Estimate words needed based on lines and WPL
-  const wordsNeeded = Math.ceil(gameLines * gameWPL * 1.5); // Add buffer
+  // Estimate words needed based on lines
+  const wordsNeeded = Math.ceil(gameLines * 1.5); // Add buffer
   const initialWordCount = Math.max(50, wordsNeeded); // Ensure reasonable minimum
 
   for (let i = 0; i < initialWordCount; i++) {
@@ -294,13 +230,6 @@ function gameOver() {
   }
   if (highScoreFooterEl)
     highScoreFooterEl.textContent = `High Score: ${highScore}`;
-
-  // Remove message sending - popup listener will also be removed
-  // chrome.runtime.sendMessage({
-  //   message: "updateWPM",
-  //   lastWPM: result,
-  //   highScore: highScore,
-  // });
 }
 
 // --- Event Listeners ---
@@ -322,10 +251,6 @@ window.updateGameSetting = function (setting, value) {
   } else if (setting === "lines") {
     gameLines = numericValue;
     localStorage.setItem("gameLines", gameLines); // Save immediately
-    settingsChanged = true;
-  } else if (setting === "wpl") {
-    gameWPL = numericValue;
-    localStorage.setItem("gameWPL", gameWPL); // Save immediately
     settingsChanged = true;
   }
 
@@ -424,7 +349,7 @@ gameEl.addEventListener("keydown", (ev) => {
         }
 
         if (wordsAhead < 15) {
-          const wordsToAdd = Math.max(20, gameLines * gameWPL); // Add decent batch
+          const wordsToAdd = Math.max(20, gameLines); // Add decent batch
           // Use DocumentFragment for performance
           const fragment = document.createDocumentFragment();
           for (let i = 0; i < wordsToAdd; i++) {
@@ -546,7 +471,7 @@ gameEl.addEventListener("keydown", (ev) => {
 newGameBtn.addEventListener("click", newGame);
 
 // --- Initial Setup ---
-// Apply saved settings on load (Lines and WPL which calculates Font Size)
+// Apply saved settings on load (Lines)
 applySettings();
 // Start the first game
 newGame();

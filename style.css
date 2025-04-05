@@ -168,7 +168,6 @@ body.dark-mode #moonIcon {
   flex-shrink: 0;
   gap: 10px; /* Spacing between controls */
   flex-wrap: wrap; /* Allow wrapping if needed */
-  border-bottom: 1px solid var(--borderColor); /* Optional separator */
   margin-bottom: 10px; /* Space before game area */
 }
 
@@ -285,7 +284,6 @@ body.dark-mode .slider::-moz-range-thumb {
   align-items: center;
   padding: 6px 10px 10px 10px;
   flex-shrink: 0; /* Prevent footer from shrinking */
-  border-top: 1px solid var(--borderColor); /* Optional separator */
 }
 
 .btn {
@@ -409,7 +407,6 @@ div#game {
   ); /* Minimum height for 1 line at 1rem */
   overflow: hidden; /* Clip content beyond the calculated height */
   position: relative; /* For absolute positioning of cursor and focus-error */
-  border: 1px solid var(--borderColor);
   border-radius: 4px;
   padding: 5px;
   /* Let the main area handle flex growth, game area uses calculated height */
