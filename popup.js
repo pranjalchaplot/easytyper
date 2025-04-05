@@ -1,22 +1,25 @@
 document.addEventListener("DOMContentLoaded", () => {
   const darkModeToggle = document.getElementById("darkModeToggle");
   const body = document.body;
-  // Function to apply theme based on stored preference or system preference
+
+  // --- Theme Handling ---
   const applyTheme = (theme) => {
     if (theme === "dark") {
       body.classList.add("dark-mode");
     } else {
       body.classList.remove("dark-mode");
     }
+    // Save the applied theme
+    chrome.storage.sync.set({ theme: theme });
   };
 
-  // Load saved theme preference
+  // Load initial theme
   chrome.storage.sync.get("theme", (data) => {
     const savedTheme = data.theme;
     if (savedTheme) {
       applyTheme(savedTheme);
     } else {
-      // Optional: Check system preference if no theme is saved
+      // Check system preference if no theme saved
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
@@ -24,137 +27,124 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Toggle theme on button click
+  // Theme toggle button listener
   darkModeToggle.addEventListener("click", () => {
     const isDarkMode = body.classList.toggle("dark-mode");
     const newTheme = isDarkMode ? "dark" : "light";
-    // Save the new theme preference
-    chrome.storage.sync.set({ theme: newTheme });
+    applyTheme(newTheme); // Apply and save
   });
 
-  // Ensure game gets focus when popup opens (might need slight delay)
-  setTimeout(() => {
-    const gameArea = document.getElementById("game");
-    if (gameArea) {
-      gameArea.focus();
-    }
-  }, 100); // Small delay to ensure elements are fully rendered
+  // --- Game Focus ---
 
-  // Optional: Refocus game area if user clicks outside and then back into the popup window
-  window.addEventListener("focus", () => {
-    const gameArea = document.getElementById("game");
-    // Only refocus if the game isn't already over
-    if (
-      gameArea &&
-      !gameArea.classList.contains("over") &&
-      document.activeElement !== gameArea
-    ) {
-      gameArea.focus();
-    }
-  });
-
-  loadGameTime();
-
-  // Listen for messages from typing.js
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.message === "updateTime") {
-      const newTime = parseInt(request.time);
-      gameTime = newTime;
-      if (!gameActive) {
-        remainingTime = newTime;
-      }
-      localStorage.setItem("gameTime", newTime);
-    }
-
-    if (request.message === "updateWPM") {
-      const lastWPM = request.lastWPM;
-      const highScore = request.highScore;
-
-      // Update the popup with the WPM values
-      document.getElementById("lastWPM").textContent = `Last WPM: ${lastWPM}`;
-      document.getElementById(
-        "highScore"
-      ).textContent = `High Score: ${highScore}`;
-    }
-  });
-
-  // Load last WPM and high score from local storage on popup load
+  // --- WPM Display ---
   const lastWPM = localStorage.getItem("lastWPM") || "--";
   const highScore = localStorage.getItem("highScore") || "--";
-
-  // Update the popup with the WPM values
   document.getElementById("lastWPM").textContent = `Last WPM: ${lastWPM}`;
   document.getElementById("highScore").textContent = `High Score: ${highScore}`;
 
-  // Get references to the elements
-  const infoDiv = document.getElementById("info");
-  const timeSliderContainer = document.getElementById("timeSliderContainer");
-  const timeSlider = document.getElementById("timeSlider");
-  const timeSliderValue = document.getElementById("timeSliderValue");
+  // --- Message Listener (REMOVED - typing.js updates DOM directly now) ---
+  // chrome.runtime.onMessage.addListener((request, sender, sendResponse) => { ... });
 
-  // Function to update the displayed time value
-  function updateTimeValue(value) {
-    if (value == 120) {
-      infoDiv.textContent = value + "s+";
-    } else {
-      infoDiv.textContent = value + "s";
+  // --- Generic Function to Send Message (REMOVED - Using direct calls now) ---
+  // function sendMessageToContentScript(messagePayload) { ... }
+
+  // --- Slider Setup Function ---
+  function setupSlider(
+    infoId,
+    sliderContainerId,
+    sliderId,
+    storageKey,
+    messageType,
+    valueFormatter,
+    defaultValue
+  ) {
+    const infoDiv = document.getElementById(infoId);
+    const sliderContainer = document.getElementById(sliderContainerId);
+    const slider = document.getElementById(sliderId);
+    const allSliderContainers = document.querySelectorAll(".slider-container"); // Get all containers
+
+    // Function to update the display text
+    function updateValueDisplay(value) {
+      infoDiv.textContent = valueFormatter(value);
     }
-  }
 
-  // Initially set the time value
-  gameTime = localStorage.getItem("gameTime") || 10; // Default to 10 seconds
-  timeSlider.value = gameTime;
-  updateTimeValue(gameTime);
+    // Load saved setting or use default
+    function loadSetting() {
+      const savedValue = localStorage.getItem(storageKey) || defaultValue;
+      slider.value = savedValue;
+      updateValueDisplay(savedValue);
+      // Send initial value in case content script missed it (optional, typing.js loads its own)
+      // sendMessageToContentScript({ message: messageType, [storageKey.replace('game', '').toLowerCase()]: savedValue });
+    }
 
-  // Add event listener to the info div to toggle the slider's visibility
-  infoDiv.addEventListener("click", () => {
-    timeSliderContainer.style.display =
-      timeSliderContainer.style.display === "none" ? "block" : "none";
-  });
-
-  // Add event listener to the slider to update the displayed value and send the value to typing.js
-  timeSlider.addEventListener("input", (e) => {
-    const newTime = parseInt(e.target.value);
-    updateTimeValue(newTime); // Update the displayed value immediately
-    sendTimeValue(newTime); // Send the updated time to typing.js
-    localStorage.setItem("gameTime", newTime); // Save to local storage
-  });
-
-  // Function to send the time value to typing.js
-  function sendTimeValue(value) {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      if (tabs.length > 0) {
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          {
-            message: "updateTime",
-            time: value,
-          },
-          function (response) {
-            if (chrome.runtime.lastError) {
-              const errorMessage = chrome.runtime.lastError.message;
-              if (
-                errorMessage.includes(
-                  "Could not establish connection. Receiving end does not exist."
-                )
-              ) {
-                console.error(
-                  "Content script not found in the active tab. Ensure the content script is injected and the page is loaded."
-                );
-                // Optionally, you could display a message to the user here
-              } else {
-                console.error("Error sending message to tab:", errorMessage);
-              }
-            } else if (response && response.success) {
-              console.log("Message sent successfully to tab.");
-            } else {
-              console.error("Tab did not respond to message.");
-            }
-          }
-        );
+    // Click listener for the info display (toggle slider visibility)
+    infoDiv.addEventListener("click", () => {
+      const isVisible = sliderContainer.style.display === "block";
+      // Hide all sliders first
+      allSliderContainers.forEach(
+        (container) => (container.style.display = "none")
+      );
+      // Then show the target slider if it was hidden
+      sliderContainer.style.display = isVisible ? "none" : "flex"; // Use flex for inline display
+    });
+    // Input listener for the slider
+    slider.addEventListener("input", (e) => {
+      const newValue = e.target.value;
+      updateValueDisplay(newValue);
+      localStorage.setItem(storageKey, newValue);
+      // Call the global function in typing.js directly
+      const settingKey = storageKey.replace("game", "").toLowerCase(); // e.g., 'time', 'lines', 'wpl'
+      if (window.updateGameSetting) {
+        window.updateGameSetting(settingKey, newValue);
       } else {
-        console.error("No active tabs found.");
+        console.error(
+          "typing.js or updateGameSetting function not loaded yet."
+        );
       }
     });
+
+    // Close slider if clicking outside
+    document.addEventListener("click", (event) => {
+      if (
+        !sliderContainer.contains(event.target) &&
+        !infoDiv.contains(event.target)
+      ) {
+        sliderContainer.style.display = "none";
+      }
+    });
+    // Initial load
+    loadSetting();
   }
+
+  // --- Initialize Sliders ---
+  setupSlider(
+    "info",
+    "timeSliderContainer",
+    "timeSlider",
+    "gameTime",
+    "updateTime",
+    (value) => (value == 120 ? value + "s+" : value + "s"), // Formatter for time
+    10 // Default value
+  );
+
+  setupSlider(
+    "linesInfo",
+    "linesSliderContainer",
+    "linesSlider",
+    "gameLines",
+    "updateLines",
+    (value) => `${value} line${value > 1 ? "s" : ""}`, // Formatter for lines
+    4 // Default value
+  );
+
+  setupSlider(
+    // *** NEW WPL Slider ***
+    "wplInfo",
+    "wplSliderContainer",
+    "wplSlider",
+    "gameWPL",
+    "updateWPL",
+    (value) => `${value} wpl`, // Formatter for WPL
+    10 // Default value
+  );
 });

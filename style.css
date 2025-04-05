@@ -1,14 +1,14 @@
-/* --- Base Styles & Theme from Project B --- */
+/* --- Base Styles & Theme --- */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Roboto+Mono&display=swap");
 
 :root {
   /* Light Mode Base Colors */
-  --bgColor: #f8f9fa; /* Lighter background */
+  --bgColor: #f8f9fa;
   --panelBgColor: #ffffff;
   --borderColor: #e0e0e0;
   --textPrimary: #212529;
-  --textSecondary: #6c757d; /* Adjusted secondary text */
-  --primaryColor: #007bff; /* Standard blue for primary */
+  --textSecondary: #6c757d;
+  --primaryColor: #007bff;
   --buttonBg: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.8),
@@ -25,14 +25,16 @@
   --iconBtnHoverBg: #f0f0f0;
   --formatIndicatorBg: #f5f5f5;
   --formatIndicatorColor: #666;
+  --sliderTrackColor: var(--borderColor);
+  --sliderThumbColor: var(--primaryColor);
 
   /* Dark Mode Overrides (applied via body.dark-mode) */
   --darkBgColor: #121212;
-  --darkPanelBgColor: #1e1e1e; /* Darker panel */
+  --darkPanelBgColor: #1e1e1e;
   --darkBorderColor: #333;
   --darkTextPrimary: #e0e0e0;
-  --darkTextSecondary: #a0a0a0; /* Lighter secondary */
-  --darkPrimaryColor: #4dabf7; /* Lighter blue for dark mode */
+  --darkTextSecondary: #a0a0a0;
+  --darkPrimaryColor: #4dabf7;
   --darkButtonBg: linear-gradient(
     135deg,
     rgba(50, 50, 50, 0.8),
@@ -49,6 +51,14 @@
   --darkIconBtnHoverBg: #333;
   --darkFormatIndicatorBg: #333;
   --darkFormatIndicatorColor: #ccc;
+  --darkSliderTrackColor: var(--darkBorderColor);
+  --darkSliderThumbColor: var(--darkPrimaryColor);
+
+  /* Configurable Typing Area Variables */
+  --line-height-relative: 1.8; /* Unitless line-height multiplier */
+  --line-count: 4; /* Default lines */
+  --word-font-size: 1.5rem; /* Default font size - NOW DYNAMICALLY SET */
+  --words-per-line: 10; /* Approx target words per line */
 }
 
 * {
@@ -57,11 +67,17 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%; /* Needed for body height 100% */
+  min-height: 450px;
+}
+
 body {
   font-family: "Montserrat", sans-serif;
-  width: 700px; /* Adjusted width */
-  height: 450px; /* Adjusted height */
-  overflow: hidden;
+  width: 700px; /* Fixed width for extension popup */
+  height: 100%; /* Make body fill html height */
+  min-height: 450px; /* Optional: set a minimum sensible height */
+  overflow: hidden; /* Hide overflow for popup */
   background-color: var(--bgColor);
   color: var(--textPrimary);
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -71,9 +87,10 @@ body {
 .container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100%; /* Fill body height */
+  min-height: 0; /* Flexbox fix */
   padding: 10px;
-  background-color: var(--panelBgColor); /* Container has panel bg */
+  background-color: var(--panelBgColor);
   transition: background-color 0.3s ease;
 }
 
@@ -81,30 +98,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 10px 6px 10px;
-  transition: border-color 0.3s ease;
+  padding: 10px 10px 0 10px; /* Reduced bottom padding */
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 h1.header-title {
-  font-size: 18px; /* Slightly smaller header */
-  font-weight: 600; /* Medium weight */
+  font-size: 18px;
+  font-weight: 600;
   color: var(--textPrimary);
-}
-
-.header-title::after {
-  content: "";
-  display: inline-block;
-  width: 0.8em;
-  height: 0.8em;
-  background-color: red;
-  border-radius: 50%;
-  margin-left: 3px;
-  margin-bottom: 2px;
-  vertical-align: middle;
-}
-
-body.dark-mode .header-title::after {
-  background-color: #ff6666;
 }
 
 .actions {
@@ -123,26 +124,34 @@ body.dark-mode .header-title::after {
   border-radius: 4px;
   color: var(--textSecondary);
   transition: background-color 0.2s, color 0.2s;
+  position: relative;
+  width: 28px;
+  height: 28px;
 }
 
 .icon-btn svg {
-  stroke: currentColor; /* Make SVG color inherit */
+  stroke: currentColor;
 }
 
 .icon-btn:hover {
   background-color: var(--iconBtnHoverBg);
-  color: var(--textPrimary); /* Darken icon on hover */
+  color: var(--textPrimary);
 }
 
 #sunIcon,
 #moonIcon {
   position: absolute;
   transition: opacity 0.4s ease;
+  top: 4px;
+  left: 4px;
 }
 
 #moonIcon {
   opacity: 0;
+  fill: currentColor;
+  stroke: none;
 }
+
 body.dark-mode #sunIcon {
   opacity: 0;
 }
@@ -150,10 +159,124 @@ body.dark-mode #moonIcon {
   opacity: 1;
 }
 
+/* --- NEW Settings Bar --- */
+.settings-bar {
+  display: flex;
+  justify-content: space-between; /* Distribute items */
+  align-items: center;
+  padding: 6px 10px;
+  flex-shrink: 0;
+  gap: 10px; /* Spacing between controls */
+  flex-wrap: wrap; /* Allow wrapping if needed */
+  border-bottom: 1px solid var(--borderColor); /* Optional separator */
+  margin-bottom: 10px; /* Space before game area */
+}
+
+.setting-control {
+  /* position: relative; /* No longer needed for absolute slider */
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Add gap between indicator and slider */
+}
+
+/* Ensure last item (button) takes remaining space */
+.settings-bar #buttons {
+  margin-left: auto; /* Push button to the right */
+}
+
+/* Style all info indicators */
+#info,
+#linesInfo,
+#wplInfo {
+  min-width: 60px;
+  text-align: center;
+  color: var(--primaryColor); /* Use theme primary color */
+  font-weight: 500;
+}
+
+body.dark-mode #info,
+body.dark-mode #linesInfo,
+body.dark-mode #wplInfo {
+  color: var(--darkPrimaryColor);
+}
+
+/* --- Slider Styles --- */
+.slider-container {
+  display: none; /* Hidden by default */
+  /* Removed absolute positioning and popup styles */
+  align-items: center; /* Align items within the container (the slider itself) */
+  /* background-color: var(--panelBgColor); */ /* No background needed */
+  /* padding: 8px 12px; */ /* No padding needed */
+  /* border-radius: 4px; */
+  /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); */
+  /* margin-top: 4px; */
+  /* min-width: 150px; */ /* Slider width set directly now */
+}
+
+/* body.dark-mode .slider-container { */ /* No special dark mode background needed */
+/* background-color: var(--darkPanelBgColor); */
+/* box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1); */
+/* } */
+
+.slider {
+  -webkit-appearance: none;
+  width: 100px; /* Give slider a fixed width */
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sliderTrackColor);
+  outline: none;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+
+body.dark-mode .slider {
+  background: var(--darkSliderTrackColor);
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--sliderThumbColor);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--sliderThumbColor);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  border: none;
+}
+
+.slider:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.slider:hover::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+body.dark-mode .slider::-webkit-slider-thumb {
+  background: var(--darkSliderThumbColor);
+}
+
+body.dark-mode .slider::-moz-range-thumb {
+  background: var(--darkSliderThumbColor);
+}
+
 .panels {
-  flex: 1;
-  padding: 15px 10px; /* More padding around main content */
-  overflow: hidden; /* Prevent panels div itself from scrolling */
+  flex: 1; /* Take remaining vertical space */
+  padding: 0 10px 0 10px; /* Adjusted padding */
+  overflow: hidden; /* Hide overflow within panels */
+  display: flex; /* Use flex for main content */
+  flex-direction: column; /* Stack main vertically */
+  min-height: 0; /* Crucial flexbox fix for overflow */
 }
 
 .footer {
@@ -161,22 +284,24 @@ body.dark-mode #moonIcon {
   justify-content: space-between;
   align-items: center;
   padding: 6px 10px 10px 10px;
-  transition: border-color 0.3s ease;
+  flex-shrink: 0; /* Prevent footer from shrinking */
+  border-top: 1px solid var(--borderColor); /* Optional separator */
 }
 
 .btn {
-  padding: 6px 14px; /* Slightly smaller buttons */
+  padding: 6px 14px;
   background: var(--buttonBg);
   border: 1px solid var(--buttonBorder);
-  border-radius: 6px; /* Less rounded buttons */
+  border-radius: 6px;
   cursor: pointer;
-  display: inline-flex; /* Use inline-flex */
+  display: inline-flex;
   align-items: center;
   gap: 5px;
-  transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s,
+    transform 0.1s;
   font-family: "Montserrat", sans-serif;
   font-weight: 500;
-  font-size: 13px; /* Smaller button text */
+  font-size: 13px;
   color: var(--textPrimary);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
@@ -185,6 +310,9 @@ body.dark-mode #moonIcon {
 .btn:hover {
   background: var(--buttonHoverBg);
   box-shadow: var(--buttonHoverShadow);
+}
+.btn:active {
+  transform: scale(0.98); /* Slight shrink on click */
 }
 
 .format-indicator {
@@ -195,6 +323,15 @@ body.dark-mode #moonIcon {
   border-radius: 4px;
   background-color: var(--formatIndicatorBg);
   transition: background-color 0.3s ease, color 0.3s ease;
+  white-space: nowrap; /* Prevent wrapping */
+}
+
+.format-indicator.interactive {
+  cursor: pointer;
+}
+
+.format-indicator.interactive:hover {
+  background-color: var(--iconBtnHoverBg);
 }
 
 /* --- Dark Mode Specific Styles --- */
@@ -208,7 +345,9 @@ body.dark-mode .container {
 }
 
 body.dark-mode .header,
-body.dark-mode .footer {
+body.dark-mode .footer,
+body.dark-mode .settings-bar {
+  /* Apply border to settings bar too */
   border-color: var(--darkBorderColor);
 }
 
@@ -241,54 +380,45 @@ body.dark-mode .format-indicator {
   color: var(--darkFormatIndicatorColor);
 }
 
-/* --- Styles Integrated from Project A (HippoType) --- */
+body.dark-mode .format-indicator.interactive:hover {
+  background-color: var(--darkIconBtnHoverBg);
+}
 
-/* Override Project A's main to fit container */
+/* --- Typing Game Styles --- */
 main.typing-main {
   width: 100%;
-  margin: 0; /* Remove auto margin */
+  margin: 0;
   display: flex;
   flex-direction: column;
-  height: 100%; /* Make main fill the panel space */
-}
-
-/* Project A's header adapted */
-#typing-header {
-  display: flex; /* Use flexbox */
-  justify-content: space-between; /* Space out items */
-  align-items: center; /* Align vertically */
-  margin-bottom: 15px; /* Space below header */
-  padding: 0 5px; /* Add slight horizontal padding */
-}
-
-#info {
-  /* Styles inherited from .format-indicator */
-  font-weight: 500;
-  min-width: 60px; /* Ensure space for WPM */
-  text-align: center;
-  color: var(--primaryColor); /* Use theme primary color */
-}
-
-body.dark-mode #info {
-  color: var(--darkPrimaryColor);
-}
-
-#buttons {
-  text-align: right; /* Keep button to the right */
+  justify-content: center; /* Center the game panel vertically */
+  flex: 1; /* Take remaining space within panels */
+  min-height: 0; /* Crucial flexbox fix */
 }
 
 /* Typing Game Area */
 div#game {
-  line-height: 30px; /* Adjust line height slightly */
-  height: calc(3 * 30px); /* Show 3 lines */
-  overflow: hidden;
-  position: relative;
-  border: 1px solid var(--borderColor); /* Add border like panels */
+  font-family: "Roboto Mono", monospace; /* Font for typing */
+  line-height: var(--line-height-relative); /* Set base line height */
+  /* Calculate height: lines * font-size * relative-line-height */
+  /* IMPORTANT: Height transition requires explicit height */
+  height: calc(
+    var(--line-count) * var(--word-font-size) * var(--line-height-relative)
+  );
+  min-height: calc(
+    1 * 1rem * var(--line-height-relative)
+  ); /* Minimum height for 1 line at 1rem */
+  overflow: hidden; /* Clip content beyond the calculated height */
+  position: relative; /* For absolute positioning of cursor and focus-error */
+  border: 1px solid var(--borderColor);
   border-radius: 4px;
   padding: 5px;
-  flex-grow: 1; /* Allow game area to take remaining space */
-  background-color: var(--bgColor); /* Match body background */
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  /* Let the main area handle flex growth, game area uses calculated height */
+  flex: 0 0 auto; /* Don't grow or shrink based on flex, use calculated height */
+  background-color: var(--bgColor);
+  transition: border-color 0.3s ease, background-color 0.3s ease,
+    height 0.2s ease-out; /* Added height transition */
+  cursor: text;
+  margin-bottom: 10px; /* Space before footer */
 }
 
 body.dark-mode div#game {
@@ -297,18 +427,23 @@ body.dark-mode div#game {
 }
 
 div#game:focus {
-  outline: 1px solid var(--primaryColor); /* Focus outline with theme color */
-  border-color: var(--primaryColor); /* Highlight border on focus */
+  outline: 1px solid var(--primaryColor);
+  border-color: var(--primaryColor);
 }
+
 body.dark-mode div#game:focus {
   outline-color: var(--darkPrimaryColor);
   border-color: var(--darkPrimaryColor);
 }
 
 #words {
-  filter: blur(3px); /* Slightly less blur */
+  /* Words container takes full width and allows wrapping */
+  width: 100%;
+  height: 100%; /* Fill the #game container */
+  overflow-y: hidden; /* Controlled by #game height and scrolling logic */
   color: var(--textSecondary);
-  transition: filter 0.2s ease, opacity 0.3s ease;
+  transition: filter 0.2s ease, opacity 0.3s ease, font-size 0.2s ease-out; /* Added font-size transition */
+  font-size: var(--word-font-size); /* Apply dynamic font size here */
 }
 
 #game:focus #words {
@@ -322,63 +457,61 @@ body.dark-mode #words {
 #focus-error {
   position: absolute;
   inset: 0;
-  display: flex; /* Use flex to center */
+  display: flex;
   align-items: center;
   justify-content: center;
   color: var(--textSecondary);
-  background-color: rgba(0, 0, 0, 0.1); /* Slight overlay */
-  border-radius: 4px; /* Match parent */
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  opacity: 1;
 }
+
 body.dark-mode #focus-error {
   color: var(--darkTextSecondary);
   background-color: rgba(255, 255, 255, 0.1);
 }
 
 #game:focus #focus-error {
-  display: none;
+  opacity: 0;
+  pointer-events: none; /* Ensure it's not interactable when hidden */
 }
 
 /* Words and Letters */
 div.word {
-  display: inline-block;
-  font-family: "Roboto Mono", monospace; /* Specific font for typing */
-  margin: 0 4px; /* Slightly less margin */
-  font-size: 1.1rem; /* Adjust font size */
+  display: inline-block; /* Keep words inline */
+  margin: 0 0.25em; /* Use em for margin relative to font size */
+  line-height: inherit; /* Inherit from #game */
+  white-space: nowrap; /* Keep letters within a word together */
+  /* Font size is inherited from #words */
 }
 
 .letter {
-  /* Default state */
-  color: var(--textSecondary); /* Use secondary text color */
-  transition: color 0.1s ease;
-}
-body.dark-mode .letter {
-  color: var(--darkTextSecondary);
+  display: inline-block; /* Keep letters inline */
+  font-size: inherit; /* Inherit font size from .word (ultimately #words) */
+  transition: color 0.1s ease-in-out, background-color 0.1s ease-in-out;
+  min-width: 0.1em; /* Prevent collapsing */
+  color: inherit; /* Inherit color from #words */
 }
 
 .letter.correct {
-  color: var(--textPrimary); /* Use primary text color for correct */
+  color: var(--textPrimary);
 }
+
 body.dark-mode .letter.correct {
   color: var(--darkTextPrimary);
 }
 
 .letter.incorrect {
   color: #dc3545; /* Red for incorrect */
-  /* Add subtle background or underline for incorrect */
   background-color: rgba(220, 53, 69, 0.1);
   border-radius: 2px;
 }
-body.dark-mode .letter.incorrect {
-  color: #f8d7da; /* Lighter red for dark mode text */
-  background-color: rgba(248, 215, 218, 0.1);
-}
 
-.letter.incorrect.extra {
-  text-decoration: underline wavy #dc3545; /* Indicate extra letters */
-  background-color: transparent;
-}
-body.dark-mode .letter.incorrect.extra {
-  text-decoration-color: #f8d7da;
+body.dark-mode .letter.incorrect {
+  color: #f8d7da;
+  background-color: rgba(248, 215, 218, 0.1);
 }
 
 /* Cursor Styling */
@@ -395,14 +528,19 @@ body.dark-mode .letter.incorrect.extra {
 #cursor {
   display: none; /* Hidden by default */
   width: 2px;
-  height: 1.3rem; /* Match letter size */
+  /* Base height on font size variable and relative line height */
+  height: calc(
+    var(--word-font-size) * var(--line-height-relative) * 0.8
+  ); /* Adjust multiplier (e.g., 0.8) as needed */
   background: var(--primaryColor);
-  position: absolute; /* Position relative to #game */
-  /* top/left set by JS */
+  position: absolute;
   animation: blink 0.5s infinite;
   border-radius: 1px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, height 0.2s ease-out, top 0.05s linear,
+    left 0.05s linear; /* Faster position transition */
+  pointer-events: none;
 }
+
 body.dark-mode #cursor {
   background: var(--darkPrimaryColor);
 }
@@ -413,7 +551,7 @@ body.dark-mode #cursor {
 
 /* Game Over State */
 #game.over #words {
-  opacity: 0.6; /* Slightly more visible */
+  opacity: 0.6;
   filter: blur(0px);
 }
 
@@ -422,199 +560,11 @@ body.dark-mode #cursor {
 }
 
 #game.over #focus-error {
-  display: none;
+  opacity: 0; /* Hide focus error when game is over */
 }
 
-/* Adjust footer WPM placeholder */
-.footer .format-indicator:first-child {
-  min-width: 80px; /* Give space for "WPM: XXX" */
-}
-
-/* Time Slider Styling */
-#timeSliderContainer {
-  display: none; /* Hide time slider by default */
-  justify-content: center; /* Center the slider horizontally */
-  width: 50%; /* Decrease the width */
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 10px;
-}
-
-#timeSliderContainer.show {
-  display: flex; /* Show the slider when the 'show' class is added */
-}
-
-#timeSlider {
-  width: 100%; /* Make the slider fill the container */
-  -webkit-appearance: none; /* Remove default styling */
-  height: 4px;
-  border-radius: 2px;
-  background: var(--borderColor);
-  outline: none;
-  transition: background 0.3s;
-}
-
-body.dark-mode #timeSlider {
-  background: var(--darkBorderColor);
-}
-
-/* Slider thumb styling */
-#timeSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--primaryColor);
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
-
-#timeSlider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--primaryColor);
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-  border: none;
-}
-
-/* Slider hover effects */
-#timeSlider:hover::-webkit-slider-thumb {
-  transform: scale(1.2);
-}
-
-#timeSlider:hover::-moz-range-thumb {
-  transform: scale(1.2);
-}
-
-body.dark-mode #timeSlider::-webkit-slider-thumb {
-  background: var(--darkPrimaryColor);
-}
-
-body.dark-mode #timeSlider::-moz-range-thumb {
-  background: var(--darkPrimaryColor);
-}
-
-/* Slider value display */
-#timeSliderValue {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--panelBgColor);
-  color: var(--textSecondary);
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  display: block;
+/* Footer Indicators */
+.footer .format-indicator {
+  min-width: 80px;
   text-align: center;
-  margin-top: 5px;
-  transition: opacity 0.3s;
-  pointer-events: none;
-}
-
-body.dark-mode #timeSliderValue {
-  background: var(--darkPanelBgColor);
-  color: var(--darkTextSecondary);
-}
-
-#timeSliderContainer:hover #timeSliderValue {
-  opacity: 1;
-}
-
-/* Base slider styling */
-.slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--borderColor);
-  outline: none;
-  transition: background 0.3s;
-}
-
-body.dark-mode .slider {
-  background: var(--darkBorderColor);
-}
-
-/* Slider thumb styling */
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--primaryColor);
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
-
-.slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--primaryColor);
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-  border: none;
-}
-
-/* Slider hover effects */
-.slider:hover::-webkit-slider-thumb {
-  transform: scale(1.2);
-}
-
-.slider:hover::-moz-range-thumb {
-  transform: scale(1.2);
-}
-
-body.dark-mode .slider::-webkit-slider-thumb {
-  background: var(--darkPrimaryColor);
-}
-
-body.dark-mode .slider::-moz-range-thumb {
-  background: var(--darkPrimaryColor);
-}
-
-/* Slider value display */
-.slider-value {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--panelBgColor);
-  color: var(--textSecondary);
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-}
-
-body.dark-mode .slider-value {
-  background: var(--darkPanelBgColor);
-  color: var(--darkTextSecondary);
-}
-
-/* Adjust typing header to use flexbox properly */
-#typing-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding: 0 5px;
-}
-
-/* Make info a fixed size */
-#info {
-  min-width: 40px;
-  text-align: center;
-}
-
-/* Ensure buttons div is properly aligned */
-#buttons {
-  text-align: right;
 }

@@ -58,39 +58,84 @@
         </div>
       </div>
 
+      <div class="settings-bar">
+        <div class="setting-control">
+          <div
+            id="info"
+            class="format-indicator interactive"
+            title="Click to adjust time"
+          >
+            10s
+          </div>
+          <div id="timeSliderContainer" class="slider-container">
+            <input
+              type="range"
+              min="5"
+              max="120"
+              step="5"
+              value="10"
+              id="timeSlider"
+              class="slider"
+            />
+          </div>
+        </div>
+        <div class="setting-control">
+          <div
+            id="linesInfo"
+            class="format-indicator interactive"
+            title="Click to adjust lines"
+          >
+            4 lines
+          </div>
+          <div id="linesSliderContainer" class="slider-container">
+            <input
+              type="range"
+              min="3"
+              max="6"
+              step="1"
+              value="4"
+              id="linesSlider"
+              class="slider"
+            />
+          </div>
+        </div>
+        <div class="setting-control">
+          <div
+            id="wplInfo"
+            class="format-indicator interactive"
+            title="Click to adjust words per line (approx)"
+          >
+            10 wpl
+          </div>
+          <div id="wplSliderContainer" class="slider-container">
+            <input
+              type="range"
+              min="5"
+              max="20"
+              step="1"
+              value="10"
+              id="wplSlider"
+              class="slider"
+            />
+          </div>
+        </div>
+        <div id="buttons">
+          <button id="newGameBtn" class="btn">New game</button>
+        </div>
+      </div>
       <div class="panels">
         <main class="typing-main">
-          <div id="typing-header">
-            <div id="info" class="format-indicator">10</div>
-            <div id="timeSliderContainer">
-              <input
-                type="range"
-                min="5"
-                max="120"
-                step="5"
-                value="10"
-                id="timeSlider"
-                class="slider"
-              />
-            </div>
-            <div id="buttons">
-              <button id="newGameBtn" class="btn">New game</button>
-            </div>
-          </div>
           <div id="game" tabindex="0">
             <div id="words"></div>
             <div id="cursor"></div>
-            <div id="focus-error">Click here to focus</div>
           </div>
         </main>
       </div>
-
       <div class="footer">
         <span class="format-indicator" id="lastWPM">Last WPM: --</span>
         <span class="format-indicator" id="highScore">High Score: --</span>
       </div>
     </div>
-
     <script src="typing.js"></script>
     <script src="popup.js"></script>
   </body>

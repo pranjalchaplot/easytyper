@@ -1,23 +1,29 @@
+// Word list (shortened for brevity in example)
 const words =
   "in one good real one not school set they state high life consider on and not come what also for set point can want as while with of order child about school thing never hold find order each too between program work end you home place around while place problem end begin interest while public or where see time those increase interest be give end think seem small as both another a child same eye you between way do who into again good fact than under very head become real possible some write know however late each that with because that place nation only for each change form consider we would interest with world so order or run more open that large write turn never over open each over change still old take hold need give by consider line only leave while what set up number part form want against great problem can because head so first this here would course become help year first end want both fact public long word down also long for without new turn against the because write seem line interest call not if line thing what work people way may old consider leave hold want life between most place may if go who need fact such program where which end off child down change to from people high during people find to however into small new general it do that could old for last get another hand much eye great no work and with but good there last think can around use like number never since world need what we around part show new come seem while some and since still small these you general which seem will place come order form how about just also they with state late use both early too lead general seem there point take general seem few out like might under if ask while such interest feel word right again how about system such between late want fact up problem stand new say move a lead small however large public out by eye here over so be way use like say people work for since interest so face order school good not most run problem group run she late other problem real form what just high no man do under would to each too end point give number child through so this large see get form also all those course to work during about he plan still so like down he look down where course at who plan way so since come against he all who at world because while so few last these mean take house who old way large no first too now off would in this course present order home public school back own little about he develop of do over help day house stand present another by few come that down last or use say take would each even govern play around back under some line think she even when from do real problem between long as there school do as mean to all on other good may from might call world thing life turn of he look last problem after get show want need thing old other during be again develop come from consider the now number say life interest to system only group world same state school one problem between for turn run at very against eye must go both still all a as so after play eye little be those should out after which these both much house become both school this he real and may mean time by real number other as feel at end ask plan come turn by all head increase he present increase use stand after see order lead than system here ask in of look point little too without each for both but right we come world much own set we right off long those stand go both but under now must real general then before with much those at no of we only back these person plan from run new as own take early just increase only look open follow get that on system the mean plan man over it possible if most late line would first without real hand say turn point small set at in system however to be home show new again come under because about show face child know person large program how over could thing from out world while nation stand part run have look what many system order some one program you great could write day do he any also where child late face eye run still again on by as call high the must by late little mean never another seem to leave because for day against public long number word about after much need open change also".split(
     " "
   );
 const wordsCount = words.length;
-let gameTime = 10 * 1000; // 30 seconds
+const AVERAGE_WORD_LENGTH = 5; // Estimate for font calculation (chars + space)
+
+// --- Global State ---
+let gameTime = (localStorage.getItem("gameTime") || 10) * 1000; // Default 10s
+let gameLines = parseInt(localStorage.getItem("gameLines") || 4); // Default 4 lines
+let gameWPL = parseInt(localStorage.getItem("gameWPL") || 10); // Default 10 WPL
 window.timer = null;
 window.gameStart = null;
-// window.pauseTime = 0; // Not used in this version
+let gameActive = false; // Track if the timer is running
 
-// Get DOM elements (ensure these IDs match popup.html)
+// --- DOM Elements ---
 const gameEl = document.getElementById("game");
 const wordsEl = document.getElementById("words");
 const cursorEl = document.getElementById("cursor");
-const infoEl = document.getElementById("info");
+const infoEl = document.getElementById("info"); // Top timer/status display
 const newGameBtn = document.getElementById("newGameBtn");
-const wpmFooterEl = document.querySelector(
-  ".footer .format-indicator:first-child"
-); // Target footer WPM display
+const wpmFooterEl = document.getElementById("lastWPM"); // Footer WPM
+const highScoreFooterEl = document.getElementById("highScore"); // Footer High Score
 
+// --- Utility Functions ---
 function addClass(el, name) {
   if (el) el.classList.add(name);
 }
@@ -25,21 +31,104 @@ function removeClass(el, name) {
   if (el) el.classList.remove(name);
 }
 
-function loadGameTime() {
-  const savedTime = localStorage.getItem("gameTime");
-  if (savedTime) {
-    // Update your game's time variable
-    gameTime = parseInt(savedTime) * 1000; // Convert seconds to milliseconds
+// --- *** NEW/MODIFIED: Calculate Font Size & Apply Settings *** ---
 
-    // If you have a countdown or timer display, update it
-    if (document.getElementById("info")) {
-      document.getElementById("info").textContent = savedTime + "s";
-    }
-  }
+// Debounce function to limit rapid recalculations
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
+// Recalculate font size based on desired Words Per Line (WPL)
+function calculateAndApplyFontSize(targetWPL) {
+  if (!wordsEl || !gameEl || targetWPL <= 0 || gameLines <= 0) return;
+
+  // --- Calculate Font Size based on Width (WPL) ---
+  const gameAreaPaddingHorizontal = 10; // Sum of left/right padding in #game (5px + 5px)
+  const containerWidth = gameEl.offsetWidth - gameAreaPaddingHorizontal;
+  let fontSizeRemFromWPL = 2.5; // Default max
+
+  if (containerWidth > 0) {
+    const targetWidthPerWord = containerWidth / targetWPL;
+    const estimatedCharWidthAt1Rem = 0.6; // Heuristic
+    const estimatedFontSizeWPL =
+      targetWidthPerWord / (AVERAGE_WORD_LENGTH + 1) / estimatedCharWidthAt1Rem;
+    fontSizeRemFromWPL = Math.max(0.8, Math.min(estimatedFontSizeWPL, 2.5)); // Clamp WPL calculation
+  }
+
+  // --- Calculate Font Size based on Height (Lines) ---
+  const gameAreaPaddingVertical = 10; // Sum of top/bottom padding (5px + 5px)
+  const containerHeight = gameEl.offsetHeight - gameAreaPaddingVertical;
+  const lineHeightRelative = 1.8; // Must match CSS variable --line-height-relative
+  let fontSizeRemFromHeight = 2.5; // Default max
+
+  if (containerHeight > 0) {
+    const rootFontSizePx = parseFloat(
+      getComputedStyle(document.documentElement).fontSize
+    );
+    const maxFontSizePx = containerHeight / (gameLines * lineHeightRelative);
+    const estimatedFontSizeHeight = maxFontSizePx / rootFontSizePx; // Convert to rem
+    fontSizeRemFromHeight = Math.max(
+      0.8,
+      Math.min(estimatedFontSizeHeight, 2.5)
+    ); // Clamp Height calculation
+  }
+
+  // --- Determine Final Font Size ---
+  // Use the smaller of the two calculated sizes to fit both width and height constraints
+  const finalFontSizeRem = Math.min(
+    fontSizeRemFromWPL,
+    fontSizeRemFromHeight
+  ).toFixed(2);
+
+  // console.log(`WPL: ${targetWPL}, Lines: ${gameLines}, Width: ${containerWidth}, Height: ${containerHeight}, FS_WPL: ${fontSizeRemFromWPL.toFixed(2)}, FS_H: ${fontSizeRemFromHeight.toFixed(2)}, Final: ${finalFontSizeRem}rem`);
+
+  // Apply the calculated font size using CSS variable
+  document.documentElement.style.setProperty(
+    "--word-font-size",
+    `${finalFontSizeRem}rem`
+  );
+
+  // Apply directly to wordsEl as well to ensure transition works
+  wordsEl.style.fontSize = `var(--word-font-size)`;
+
+  // Re-calculate cursor position *after* font size is applied and potentially rendered
+  requestAnimationFrame(updateCursorPosition);
+}
+
+// Debounced version for use with sliders/resizes
+const debouncedCalculateAndApplyFontSize = debounce(
+  calculateAndApplyFontSize,
+  150
+);
+
+function applySettings() {
+  // Apply Line Count Setting
+  document.documentElement.style.setProperty("--line-count", gameLines);
+
+  // Apply Words Per Line Setting (triggers font size calculation)
+
+  // Update cursor height based on new font size (CSS handles this now via var)
+  // cursorEl.style.height = `calc(var(--word-font-size) * var(--line-height-relative) * 0.8)`;
+
+  // Ensure game element height updates (CSS should handle this via calc())
+  // Force reflow to ensure browser recalculates layout based on new CSS vars
+  gameEl.offsetHeight; // NOSONAR: This is a trick to force reflow
+
+  // Re-calculate cursor position after applying settings
+  requestAnimationFrame(updateCursorPosition);
+}
+
+// --- Word Generation and Formatting ---
 function randomWord() {
-  const randomIndex = Math.floor(Math.random() * wordsCount); // Use floor for 0-based index
+  const randomIndex = Math.floor(Math.random() * wordsCount);
   return words[randomIndex];
 }
 
@@ -49,100 +138,137 @@ function formatWord(word) {
     .join('</span><span class="letter">')}</span></div>`;
 }
 
+// --- Cursor Position ---
 function updateCursorPosition() {
-  const nextLetter = document.querySelector(".letter.current");
-  const nextWord = document.querySelector(".word.current");
+  if (!gameEl || !cursorEl) return; // Elements not ready
 
-  if (!cursorEl || (!nextLetter && !nextWord)) return; // Element doesn't exist or no current word/letter
+  const currentLetter = document.querySelector(".letter.current");
+  const currentWord = document.querySelector(".word.current");
+
+  // If no current letter or word, maybe game hasn't started or is over
+  if (!currentLetter && !currentWord) {
+    // Position at the start of the first word if available
+    const firstLetter = wordsEl.querySelector(".letter");
+    if (firstLetter) {
+      const gameRect = gameEl.getBoundingClientRect();
+      const targetRect = firstLetter.getBoundingClientRect();
+      cursorEl.style.top = `${
+        targetRect.top - gameRect.top + gameEl.scrollTop
+      }px`;
+      cursorEl.style.left = `${targetRect.left - gameRect.left}px`;
+    } else {
+      cursorEl.style.display = "none"; // Hide cursor if no words
+    }
+    return;
+  }
+
+  cursorEl.style.display = "block"; // Ensure cursor is visible if we have a target
 
   const gameRect = gameEl.getBoundingClientRect();
   let targetRect;
 
-  if (nextLetter) {
-    targetRect = nextLetter.getBoundingClientRect();
-    cursorEl.style.top =
-      targetRect.top - gameRect.top + gameEl.scrollTop + "px"; // Position relative to gameEl top + scroll
-    cursorEl.style.left = targetRect.left - gameRect.left + "px"; // Position relative to gameEl left
-  } else if (nextWord) {
-    // Position cursor at the end of the word if no letters are left (e.g., after backspacing all)
-    targetRect = nextWord.getBoundingClientRect();
-    cursorEl.style.top =
-      targetRect.top - gameRect.top + gameEl.scrollTop + "px";
-    cursorEl.style.left = targetRect.right - gameRect.left + "px";
+  if (currentLetter) {
+    // Position cursor at the start of the current letter
+    targetRect = currentLetter.getBoundingClientRect();
+    cursorEl.style.top = `${
+      targetRect.top - gameRect.top + gameEl.scrollTop
+    }px`;
+    cursorEl.style.left = `${targetRect.left - gameRect.left}px`;
+  } else if (currentWord) {
+    // Position cursor at the end of the current word (no letters left or between words)
+    targetRect = currentWord.getBoundingClientRect();
+    const lastLetter = currentWord.lastChild; // Get the last span.letter
+    if (lastLetter) {
+      const lastLetterRect = lastLetter.getBoundingClientRect();
+      cursorEl.style.top = `${
+        lastLetterRect.top - gameRect.top + gameEl.scrollTop
+      }px`;
+      cursorEl.style.left = `${lastLetterRect.right - gameRect.left}px`; // Position after the last letter
+    } else {
+      // Empty word? Position at the start of the word's box
+      cursorEl.style.top = `${
+        targetRect.top - gameRect.top + gameEl.scrollTop
+      }px`;
+      cursorEl.style.left = `${targetRect.left - gameRect.left}px`;
+    }
   }
-  cursorEl.style.height = targetRect
-    ? `${targetRect.height * 0.9}px`
-    : "1.1rem"; // Adjust height slightly smaller than letter
+
+  // Height is now set by CSS using the --word-font-size variable
+  // cursorEl.style.height = `calc(var(--word-font-size, 1.5rem) * var(--line-height-relative) * 0.8)`;
 }
 
+// --- Game Logic ---
 function newGame() {
-  if (window.timer) clearInterval(window.timer); // Clear existing timer
+  if (window.timer) clearInterval(window.timer);
+  window.timer = null;
+  window.gameStart = null;
+  gameActive = false;
   removeClass(gameEl, "over");
   wordsEl.innerHTML = "";
-  wordsEl.style.marginTop = "0px"; // Reset scroll
-  for (let i = 0; i < 150; i++) {
-    // Generate fewer words initially for performance
+  gameEl.scrollTop = 0; // Reset scroll explicitly
+
+  // *** Apply latest settings (Lines and WPL/Font Size) ***
+  applySettings();
+
+  // Generate initial words
+  // Estimate words needed based on lines and WPL
+  const wordsNeeded = Math.ceil(gameLines * gameWPL * 1.5); // Add buffer
+  const initialWordCount = Math.max(50, wordsNeeded); // Ensure reasonable minimum
+
+  for (let i = 0; i < initialWordCount; i++) {
     wordsEl.innerHTML += formatWord(randomWord());
   }
-  // Set first word and letter
+
+  // Set first word/letter
   const firstWord = document.querySelector(".word");
   const firstLetter = document.querySelector(".letter");
   if (firstWord) addClass(firstWord, "current");
   if (firstLetter) addClass(firstLetter, "current");
 
-  // Load game time from local storage
-  const savedTime = localStorage.getItem("gameTime");
-  if (savedTime) {
-    gameTime = parseInt(savedTime) * 1000; // Convert seconds to milliseconds
-  }
+  // Reset displays
+  infoEl.textContent = `${gameTime / 1000}s`; // Show initial time
+  // Footer WPM/High Score are updated via messages or on game over
 
-  infoEl.innerHTML = gameTime / 1000 + "s"; // Show units
-  // wpmFooterEl.innerHTML = "WPM: --"; // Reset footer WPM
-  window.timer = null;
-  window.gameStart = null;
-
-  // Initial cursor position
-  requestAnimationFrame(updateCursorPosition); // Use rAF for smoother updates
-
-  // Auto-focus the game area for immediate typing
-  gameEl.focus();
+  // Update cursor *after* words are added and settings applied
+  requestAnimationFrame(() => {
+    updateCursorPosition();
+    gameEl.focus(); // Focus the game area
+  });
 }
 
 function getWpm() {
+  if (!window.gameStart) return 0; // Game hasn't started or finished abruptly
+
   const words = [...document.querySelectorAll(".word")];
   const currentWordEl = document.querySelector(".word.current");
-  // If no current word, it means we haven't typed anything or game just ended weirdly
+
+  // Index of the word *before* the currently active one
   const lastTypedWordIndex = currentWordEl
     ? words.indexOf(currentWordEl)
-    : words.length - 1;
+    : words.length;
 
-  // Only count words *before* the current word as fully typed (or all if game ended)
-  const typedWords = words.slice(0, lastTypedWordIndex);
+  const typedWords = words.slice(0, lastTypedWordIndex); // Words fully passed
 
   const correctWords = typedWords.filter((word) => {
     const letters = [...word.children];
-    // A word is correct if all its letters have the 'correct' class and none have 'incorrect'
-    const incorrectLetters = letters.filter((letter) =>
-      letter.classList.contains("incorrect")
+    // A word is correct if ALL letters have class 'correct'
+    const incorrectLetters = letters.filter((l) =>
+      l.classList.contains("incorrect")
     );
-    const correctLetters = letters.filter((letter) =>
-      letter.classList.contains("correct")
+    const correctLetters = letters.filter((l) =>
+      l.classList.contains("correct")
     );
-    // Consider a word correct only if it was fully typed correctly
+    // Ensure the word was actually typed (has letters and all are correct)
     return (
+      letters.length > 0 &&
       incorrectLetters.length === 0 &&
-      correctLetters.length === letters.length &&
-      letters.length > 0
+      correctLetters.length === letters.length
     );
   });
 
-  // Calculate WPM based on time elapsed
-  const timeElapsed = window.gameStart
-    ? new Date().getTime() - window.gameStart
-    : gameTime;
+  const timeElapsed = new Date().getTime() - window.gameStart; // Milliseconds
   const minutesElapsed = timeElapsed / 60000;
 
-  // Avoid division by zero if timeElapsed is very small
   return minutesElapsed > 0
     ? Math.round(correctWords.length / minutesElapsed)
     : 0;
@@ -151,59 +277,95 @@ function getWpm() {
 function gameOver() {
   clearInterval(window.timer);
   window.timer = null;
+  gameActive = false;
   addClass(gameEl, "over");
-  const result = getWpm();
-  infoEl.innerHTML = `Done!`; // Update top info
-  wpmFooterEl.innerHTML = `Last WPM: ${result}`; // Update footer WPM
+  const result = getWpm(); // Calculate WPM *before* updating displays
 
-  // Store last WPM in local storage
+  // Update displays
+  infoEl.textContent = `Done!`;
+  // Update footer DOM elements directly
+  if (wpmFooterEl) wpmFooterEl.textContent = `Last WPM: ${result}`;
+  // Save scores
   localStorage.setItem("lastWPM", result);
-
-  // Get all-time high WPM from local storage
-  let highScore = localStorage.getItem("highScore") || 0;
-
-  // Update all-time high WPM if current WPM is higher
+  let highScore = parseInt(localStorage.getItem("highScore") || 0);
   if (result > highScore) {
-    localStorage.setItem("highScore", result);
     highScore = result;
+    localStorage.setItem("highScore", highScore);
   }
+  if (highScoreFooterEl)
+    highScoreFooterEl.textContent = `High Score: ${highScore}`;
 
-  // Send WPM to popup.js
-  chrome.runtime.sendMessage({
-    message: "updateWPM",
-    lastWPM: result,
-    highScore: highScore,
-  });
+  // Remove message sending - popup listener will also be removed
+  // chrome.runtime.sendMessage({
+  //   message: "updateWPM",
+  //   lastWPM: result,
+  //   highScore: highScore,
+  // });
 }
 
-gameEl.addEventListener("keydown", (ev) => {
-  // Use keydown for better backspace handling
-  if (gameEl.classList.contains("over")) {
-    return; // Don't process input if game is over
+// --- Event Listeners ---
+
+// --- NEW: Function for popup.js to call directly ---
+window.updateGameSetting = function (setting, value) {
+  // console.log("updateGameSetting called:", setting, value); // Debugging
+  let settingsChanged = false;
+  const numericValue = parseInt(value);
+
+  if (setting === "time") {
+    gameTime = numericValue * 1000; // Convert s to ms
+    localStorage.setItem("gameTime", numericValue); // Save immediately
+    if (!gameActive && infoEl) {
+      // Only update display if game isn't running
+      infoEl.textContent = `${numericValue}s`;
+    }
+    settingsChanged = true;
+  } else if (setting === "lines") {
+    gameLines = numericValue;
+    localStorage.setItem("gameLines", gameLines); // Save immediately
+    settingsChanged = true;
+  } else if (setting === "wpl") {
+    gameWPL = numericValue;
+    localStorage.setItem("gameWPL", gameWPL); // Save immediately
+    settingsChanged = true;
   }
+
+  // Optional: Auto-restart game on setting change (if desired)
+  // if (settingsChanged && !gameActive) {
+  //    // Debounce newGame call if settings are changed rapidly
+  //    // clearTimeout(window.newGameTimeout);
+  //    // window.newGameTimeout = setTimeout(newGame, 300);
+  // }
+
+  if (settingsChanged) newGame();
+  return settingsChanged; // Indicate if a setting was actually updated
+};
+
+// Remove the old message listener
+// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => { ... });
+
+gameEl.addEventListener("keydown", (ev) => {
+  if (gameEl.classList.contains("over")) return; // Ignore input if game over
 
   const key = ev.key;
   const currentWord = document.querySelector(".word.current");
   const currentLetter = document.querySelector(".letter.current");
 
-  if (!currentWord) return; // Should not happen in normal flow, but safety check
+  if (!currentWord && key !== "Backspace") return; // Should not happen unless starting
 
-  const expected = currentLetter?.innerHTML || " "; // If no current letter, expect space
+  const expected = currentLetter?.textContent || " "; // Expect space if between words
   const isLetter = key.length === 1 && key !== " ";
   const isSpace = key === " ";
   const isBackspace = key === "Backspace";
 
-  // Start timer on first valid keypress (letter or space, but not backspace)
-  if (!window.timer && (isLetter || isSpace) && !isBackspace) {
+  // Start timer on first valid typing input (not backspace)
+  if (!gameActive && !window.timer && (isLetter || isSpace)) {
     window.gameStart = new Date().getTime();
+    gameActive = true;
     window.timer = setInterval(() => {
       const currentTime = new Date().getTime();
       const msPassed = currentTime - window.gameStart;
-      const sPassed = Math.round(msPassed / 1000);
-      const sLeft = Math.max(0, Math.round(gameTime / 1000 - sPassed)); // Ensure non-negative
-
-      infoEl.innerHTML = sLeft + "s";
-
+      const sLeft = Math.max(0, Math.round((gameTime - msPassed) / 1000));
+      infoEl.textContent = `${sLeft}s`;
       if (sLeft <= 0) {
         gameOver();
       }
@@ -211,121 +373,180 @@ gameEl.addEventListener("keydown", (ev) => {
   }
 
   // --- Input Handling ---
-
   if (isLetter) {
-    ev.preventDefault(); // Prevent default action for letters
+    ev.preventDefault(); // Prevent default letter actions
     if (currentLetter) {
       addClass(currentLetter, key === expected ? "correct" : "incorrect");
       removeClass(currentLetter, "current");
       if (currentLetter.nextSibling) {
         addClass(currentLetter.nextSibling, "current");
       }
-      // else: handled below - cursor moves to end of word visually
+      // If no next sibling, cursor moves visually to end of word via updateCursorPosition
     } else {
-      // Typing extra letters (currentLetter is null) - DEPRECATED: Prevent extra letters
-      console.log("Attempted extra letter - ignored");
-      // Optionally add visual feedback (e.g., shake effect)
+      // Typed letter when expecting space (end of word) - ignore
+      // console.log("Extra letter typed - ignored");
     }
   }
 
   if (isSpace) {
-    ev.preventDefault(); // Prevent default space scroll/etc.
-    // Only advance if the current letter was indeed a space (or if at end of word)
-    if (expected === " " || !currentLetter) {
-      // Mark remaining letters in the current word as incorrect if skipped
-      if (currentLetter) {
-        let letterToMark = currentLetter;
-        while (letterToMark) {
-          if (!letterToMark.classList.contains("correct")) {
-            addClass(letterToMark, "incorrect"); // Mark skipped letters
-          }
-          removeClass(letterToMark, "current");
-          letterToMark = letterToMark.nextSibling;
+    ev.preventDefault(); // Prevent default space actions (like scrolling)
+
+    // Check if we are at the end of a word (no current letter) OR the expected char is a space
+    if (!currentLetter || expected === " ") {
+      // Mark remaining (untyped) letters in current word as incorrect (skipped)
+      let letterToMark = currentLetter; // Start from current (if exists)
+      while (letterToMark) {
+        if (!letterToMark.classList.contains("correct")) {
+          addClass(letterToMark, "incorrect"); // Mark skipped letters as incorrect
         }
+        removeClass(letterToMark, "current"); // Ensure no letters in the old word remain current
+        letterToMark = letterToMark.nextSibling;
       }
 
+      // If currentLetter was null, we were already at the end, just move to next word
       removeClass(currentWord, "current");
       const nextWord = currentWord.nextSibling;
+
       if (nextWord) {
         addClass(nextWord, "current");
-        addClass(nextWord.firstChild, "current"); // Move to first letter of next word
-        // Add more words if getting close to the end
-        if (!nextWord.nextSibling?.nextSibling?.nextSibling) {
-          // Look ahead a few words
-          for (let i = 0; i < 50; i++) {
-            wordsEl.innerHTML += formatWord(randomWord());
+        if (nextWord.firstChild) {
+          addClass(nextWord.firstChild, "current"); // Move to first letter of next word
+        }
+
+        // Add more words dynamically if nearing the end
+        // Check if few words remaining in the buffer
+        let wordsAhead = 0;
+        let checkWord = nextWord;
+        while (checkWord && wordsAhead < 15) {
+          // Check about 1.5 lines ahead approx
+          checkWord = checkWord.nextSibling;
+          wordsAhead++;
+        }
+
+        if (wordsAhead < 15) {
+          const wordsToAdd = Math.max(20, gameLines * gameWPL); // Add decent batch
+          // Use DocumentFragment for performance
+          const fragment = document.createDocumentFragment();
+          for (let i = 0; i < wordsToAdd; i++) {
+            fragment.appendChild(
+              document
+                .createRange()
+                .createContextualFragment(formatWord(randomWord()))
+            );
           }
+          wordsEl.appendChild(fragment);
         }
       } else {
-        gameOver(); // Reached end of generated words (or error)
+        gameOver(); // No more words left
       }
     } else {
-      // Incorrect space press - maybe add subtle error feedback
+      // Incorrect space (pressed space mid-word)
+      if (currentLetter) {
+        addClass(currentLetter, "incorrect"); // Mark the letter where space was pressed as incorrect
+        // Optionally move cursor forward like a wrong letter? Current logic keeps cursor.
+      }
     }
   }
 
   if (isBackspace) {
-    ev.preventDefault(); // Prevent backspace navigating back
-    const isFirstLetter = currentLetter === currentWord.firstChild;
+    ev.preventDefault(); // Prevent backspace from navigating back
 
-    if (currentLetter && !isFirstLetter) {
-      // Move back one letter within the same word
-      removeClass(currentLetter, "current");
-      addClass(currentLetter.previousSibling, "current");
-      removeClass(currentLetter.previousSibling, "incorrect");
+    const isFirstLetterOfWord = currentLetter === currentWord?.firstChild;
+
+    if (currentLetter && !isFirstLetterOfWord) {
+      // Backspace within the word
+      removeClass(currentLetter, "current"); // Remove current status from current letter
+      addClass(currentLetter.previousSibling, "current"); // Make previous letter current
+      // Clear status of the now-current letter
       removeClass(currentLetter.previousSibling, "correct");
-    } else if (currentLetter && isFirstLetter) {
-      // If on first letter, try to move to previous word's last letter
+      removeClass(currentLetter.previousSibling, "incorrect");
+    } else if (currentLetter && isFirstLetterOfWord) {
+      // Backspace on the first letter of the current word
       const prevWord = currentWord.previousSibling;
       if (prevWord) {
-        removeClass(currentWord, "current");
-        addClass(prevWord, "current");
-        // Remove status from all letters in prevWord
-        [...prevWord.children].forEach((l) => {
-          removeClass(l, "current");
-          removeClass(l, "incorrect");
-          removeClass(l, "correct");
-        });
-        // Make last letter of prevWord current
-        if (prevWord.lastChild) {
-          addClass(prevWord.lastChild, "current");
+        removeClass(currentWord, "current"); // Deactivate current word
+        addClass(prevWord, "current"); // Activate previous word
+
+        // Find the first letter of the previous word to remove its current status if any
+        const firstLetterPrev = prevWord.firstChild;
+        if (firstLetterPrev) removeClass(firstLetterPrev, "current");
+
+        // Make the *last* letter of the previous word current (ready for backspace again)
+        const lastLetterPrev = prevWord.lastChild;
+        if (lastLetterPrev) {
+          addClass(lastLetterPrev, "current");
+          // Clear its status as well, ready for re-typing or further backspace
+          removeClass(lastLetterPrev, "correct");
+          removeClass(lastLetterPrev, "incorrect");
         }
       }
-      // If it's the very first letter of the first word, do nothing more
-    } else if (!currentLetter) {
-      // We are at the end of the word (after the last letter)
-      // Move back to the actual last letter
-      if (currentWord.lastChild) {
-        addClass(currentWord.lastChild, "current");
-        removeClass(currentWord.lastChild, "incorrect");
-        removeClass(currentWord.lastChild, "correct");
+      // If prevWord doesn't exist (it's the very first word), just clear the current letter
+      else {
+        removeClass(currentLetter, "current"); // Deselect letter
+        addClass(currentWord, "current"); // Keep word current
+        addClass(currentLetter, "current"); // Re-select the first letter
+        removeClass(currentLetter, "correct"); // Clear status
+        removeClass(currentLetter, "incorrect");
       }
+    } else if (!currentLetter && currentWord?.lastChild) {
+      // Cursor is visually after the last letter, move back to the last letter
+      addClass(currentWord.lastChild, "current");
+      removeClass(currentWord.lastChild, "correct");
+      removeClass(currentWord.lastChild, "incorrect");
     }
+    // If !currentLetter and no lastChild (empty word somehow?), do nothing
   }
 
   // --- Scrolling ---
   const currentWordElForScroll = document.querySelector(".word.current");
-  if (currentWordElForScroll) {
+  if (currentWordElForScroll && gameEl.clientHeight < gameEl.scrollHeight) {
     const wordRect = currentWordElForScroll.getBoundingClientRect();
     const gameRect = gameEl.getBoundingClientRect();
-    // If the top of the current word is below the middle line of the game area
-    const scrollThreshold = gameRect.top + gameEl.clientHeight / 2; // Adjust threshold slightly lower
+    const currentLetterElForScroll = document.querySelector(".letter.current");
 
-    if (wordRect.bottom > gameRect.bottom - 10) {
-      // If word bottom is near game bottom
-      gameEl.scrollTop += currentWordElForScroll.offsetHeight * 1.2; // Scroll down one line height plus a bit
-    } else if (wordRect.top < gameRect.top + 10 && gameEl.scrollTop > 0) {
-      // If word top is near game top
-      gameEl.scrollTop -= currentWordElForScroll.offsetHeight * 1.2; // Scroll up one line height plus a bit
+    let targetTop = wordRect.top;
+    // Use letter position if available for more accuracy on multi-line words (though unlikely with current CSS)
+    if (currentLetterElForScroll) {
+      targetTop = currentLetterElForScroll.getBoundingClientRect().top;
     }
+
+    const targetBottom =
+      targetTop + (currentWordElForScroll.offsetHeight || 20); // Estimate height if needed
+
+    // Calculate visible boundaries
+    const visibleTop = gameRect.top + 5; // Add small buffer
+    const visibleBottom = gameRect.bottom - 5; // Add small buffer
+
+    // Calculate line height approximation based on current styles
+    const computedStyle = window.getComputedStyle(currentWordElForScroll);
+    const fontSize = parseFloat(computedStyle.fontSize);
+    const lineHeightMultiplier =
+      parseFloat(computedStyle.lineHeight) / fontSize; // Get effective multiplier
+    const effectiveLineHeight =
+      fontSize * (isNaN(lineHeightMultiplier) ? 1.8 : lineHeightMultiplier); // Use multiplier or fallback
+
+    // Scroll down if the word/letter bottom is past the visible area bottom
+    if (targetBottom > visibleBottom) {
+      gameEl.scrollTop += effectiveLineHeight;
+    }
+    // Scroll up if the word/letter top is above the visible area top
+    else if (targetTop < visibleTop) {
+      gameEl.scrollTop -= effectiveLineHeight;
+    }
+
+    // Ensure scrollTop doesn't go negative
+    if (gameEl.scrollTop < 0) gameEl.scrollTop = 0;
   }
 
-  // Update cursor position after state changes
+  // --- Update Cursor ---
+  // Use requestAnimationFrame to ensure calculations happen after layout updates
   requestAnimationFrame(updateCursorPosition);
 });
 
-// Event listener for the New Game button
 newGameBtn.addEventListener("click", newGame);
 
-// Initial game setup on load
+// --- Initial Setup ---
+// Apply saved settings on load (Lines and WPL which calculates Font Size)
+applySettings();
+// Start the first game
 newGame();
